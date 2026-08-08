@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.31)
 
 if(APPLE)
-    project(Subquake VERSION 0.1.1 LANGUAGES C CXX OBJC OBJCXX)
+    project(Subquake VERSION 0.2.0 LANGUAGES C CXX OBJC OBJCXX)
 else()
-    project(Subquake VERSION 0.1.1 LANGUAGES C CXX)
+    project(Subquake VERSION 0.2.0 LANGUAGES C CXX)
 endif()
 
 option(SUBQUAKE_BUILD_PLUGIN "Build the YUP Standalone/VST3/AU targets" ON)
@@ -114,6 +114,23 @@ if(SUBQUAKE_BUILD_PLUGIN)
     target_include_directories(subquake_shared INTERFACE
         "${CMAKE_CURRENT_LIST_DIR}/include"
         "${CMAKE_CURRENT_LIST_DIR}/source")
+
+    if(SUBQUAKE_BUILD_TESTS)
+        add_executable(subquake_plugin_bridge_tests
+            tests/SubquakePluginBridgeTests.cpp
+            source/SubquakePlugin.cpp)
+        target_link_libraries(subquake_plugin_bridge_tests PRIVATE subquake_engine yup::yup_audio_processors)
+        target_include_directories(subquake_plugin_bridge_tests PRIVATE
+            "${CMAKE_CURRENT_LIST_DIR}/include"
+            "${CMAKE_CURRENT_LIST_DIR}/source")
+        target_compile_definitions(subquake_plugin_bridge_tests PRIVATE SUBQUAKE_HEADLESS_TEST=1)
+        target_compile_features(subquake_plugin_bridge_tests PRIVATE cxx_std_20)
+        if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+            target_compile_options(subquake_plugin_bridge_tests PRIVATE -Wall -Wextra -Wpedantic)
+        endif()
+        enable_test_assertions(subquake_plugin_bridge_tests)
+        add_test(NAME subquake_plugin_bridge_tests COMMAND subquake_plugin_bridge_tests)
+    endif()
 
     set(subquake_release_bundle_targets
         subquake_standalone_plugin

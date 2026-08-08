@@ -1,9 +1,70 @@
 #include "ParameterGridEditor.h"
 
+#include "SubquakePlugin.h"
+
 #include <algorithm>
+#include <cmath>
+#include <functional>
 
 namespace subquake::plugin
 {
+namespace
+{
+class MomentaryTriggerButton final : public yup::TextButton
+{
+public:
+    using yup::TextButton::TextButton;
+
+    std::function<void (bool)> onGateChanged;
+
+    void mouseDown (const yup::MouseEvent& event) override
+    {
+        yup::TextButton::mouseDown (event);
+        if (onGateChanged)
+            onGateChanged (true);
+    }
+
+    void mouseUp (const yup::MouseEvent& event) override
+    {
+        yup::TextButton::mouseUp (event);
+        if (onGateChanged)
+            onGateChanged (false);
+    }
+
+    void mouseExit (const yup::MouseEvent& event) override
+    {
+        yup::TextButton::mouseExit (event);
+        if (onGateChanged && isButtonDown())
+            onGateChanged (false);
+    }
+};
+
+class OutputMeter final : public yup::Component
+{
+public:
+    void setLevel (float newLevel)
+    {
+        level = std::clamp (newLevel, 0.0f, 1.0f);
+        repaint();
+    }
+
+    void paint (yup::Graphics& graphics) override
+    {
+        const auto bounds = getLocalBounds();
+        graphics.setFillColor (0xff15171bu);
+        graphics.fillRect (bounds.to<float>());
+
+        graphics.setFillColor (0xff2b3038u);
+        graphics.fillRect (bounds.withTrimmedLeft (bounds.getWidth() * level).to<float>());
+
+        graphics.setFillColor (0xfff05a28u);
+        graphics.fillRect (0.0f, 0.0f, bounds.getWidth() * level, bounds.getHeight());
+    }
+
+private:
+    float level = 0.0f;
+};
+} // namespace
 
 ParameterGridEditor::ParameterGridEditor (yup::AudioProcessor& processor,
                                           yup::StringRef newTitle,
@@ -13,6 +74,8 @@ ParameterGridEditor::ParameterGridEditor (yup::AudioProcessor& processor,
     , warning (newWarning)
     , accentColor (newAccentColor)
 {
+    subquakeProcessor = dynamic_cast<SubquakePlugin*> (&processor);
+
     const auto processorParameters = processor.getParameters();
     parameters.assign (processorParameters.begin(), processorParameters.end());
 
@@ -47,6 +110,7 @@ ParameterGridEditor::ParameterGridEditor (yup::AudioProcessor& processor,
         slider->setTextBoxStyle (yup::Slider::NoTextBox);
         slider->setPopupDisplayEnabled (false);
         slider->setMouseCursor (yup::MouseCursor::Hand);
+        slider->setClickingGrabFocus (false);
         slider->onDragStart = [parameter] (const yup::MouseEvent&) { parameter->beginChangeGesture(); };
         slider->onValueChanged = [parameter] (double value)
         {
@@ -63,8 +127,39 @@ ParameterGridEditor::ParameterGridEditor (yup::AudioProcessor& processor,
         valueLabels.push_back (std::move (valueLabel));
     }
 
+    if (subquakeProcessor != nullptr)
+    {
+        triggerButton = std::make_unique<MomentaryTriggerButton>();
+        triggerButton->setButtonText ("Trigger");
+        triggerButton->setMouseCursor (yup::MouseCursor::Hand);
+        triggerButton->setClickingGrabFocus (false);
+        static_cast<MomentaryTriggerButton*> (triggerButton.get())->onGateChanged = [this] (bool shouldBeOn)
+        {
+            mouseGateHeld = shouldBeOn;
+            publishTriggerGate();
+        };
+        addAndMakeVisible (*triggerButton);
+
+        meterLabel = std::make_unique<yup::Label>();
+        meterLabel->setText ("Output", yup::dontSendNotification);
+        meterLabel->setJustification (yup::Justification::centerLeft);
+        addAndMakeVisible (*meterLabel);
+
+        outputMeter = std::make_unique<OutputMeter>();
+        addAndMakeVisible (*outputMeter);
+
+        setWantsKeyboardFocus (true);
+    }
+
     setSize (getPreferredSize().to<float>());
     startTimerHz (30);
+}
+
+ParameterGridEditor::~ParameterGridEditor()
+{
+    mouseGateHeld = false;
+    spaceGateHeld = false;
+    publishTriggerGate();
 }
 
 bool ParameterGridEditor::isResizable() const
@@ -95,7 +190,7 @@ void ParameterGridEditor::resized()
 {
     constexpr int columns = 5;
     constexpr float margin = 20.0f;
-    constexpr float top = 78.0f;
+    constexpr float top = 124.0f;
     constexpr float gap = 12.0f;
     constexpr float labelHeight = 24.0f;
     constexpr float valueHeight = 24.0f;
@@ -109,6 +204,19 @@ void ParameterGridEditor::resized()
 
     titleLabel->setBounds (24.0f, 12.0f, bounds.getWidth() - 48.0f, 30.0f);
     warningLabel->setBounds (24.0f, 43.0f, bounds.getWidth() - 48.0f, 24.0f);
+
+    if (triggerButton != nullptr && meterLabel != nullptr && outputMeter != nullptr)
+    {
+        constexpr float triggerWidth = 132.0f;
+        constexpr float controlHeight = 32.0f;
+        const auto triggerX = margin;
+        const auto meterX = triggerX + triggerWidth + gap;
+        const auto meterWidth = std::max (80.0f, bounds.getWidth() - margin - meterX);
+
+        triggerButton->setBounds (triggerX, 80.0f, triggerWidth, controlHeight);
+        meterLabel->setBounds (meterX, 80.0f, 70.0f, controlHeight);
+        outputMeter->setBounds (meterX + 78.0f, 86.0f, meterWidth - 78.0f, 20.0f);
+    }
 
     for (std::size_t i = 0; i < sliders.size(); ++i)
     {
@@ -127,6 +235,36 @@ void ParameterGridEditor::resized()
     }
 }
 
+void ParameterGridEditor::focusLost()
+{
+    yup::AudioProcessorEditor::focusLost();
+    mouseGateHeld = false;
+    spaceGateHeld = false;
+    publishTriggerGate();
+}
+
+void ParameterGridEditor::keyDown (const yup::KeyPress& key, const yup::Point<float>& position)
+{
+    yup::AudioProcessorEditor::keyDown (key, position);
+
+    if (key.getKey() == yup::KeyPress::spaceKey && ! spaceGateHeld)
+    {
+        spaceGateHeld = true;
+        publishTriggerGate();
+    }
+}
+
+void ParameterGridEditor::keyUp (const yup::KeyPress& key, const yup::Point<float>& position)
+{
+    yup::AudioProcessorEditor::keyUp (key, position);
+
+    if (key.getKey() == yup::KeyPress::spaceKey)
+    {
+        spaceGateHeld = false;
+        publishTriggerGate();
+    }
+}
+
 void ParameterGridEditor::timerCallback()
 {
     for (std::size_t i = 0; i < sliders.size(); ++i)
@@ -135,7 +273,19 @@ void ParameterGridEditor::timerCallback()
             sliders[i]->setValue (parameters[i]->getValue(), yup::dontSendNotification);
         valueLabels[i]->setText (parameters[i]->toString(), yup::dontSendNotification);
     }
+
+    if (subquakeProcessor != nullptr && outputMeter != nullptr)
+    {
+        const auto latestPeak = subquakeProcessor->getOutputPeakLevel();
+        displayedPeak = std::max (latestPeak, displayedPeak * 0.82f);
+        static_cast<OutputMeter*> (outputMeter.get())->setLevel (displayedPeak);
+    }
+}
+
+void ParameterGridEditor::publishTriggerGate()
+{
+    if (subquakeProcessor != nullptr)
+        subquakeProcessor->setStandaloneTriggerGate (mouseGateHeld || spaceGateHeld);
 }
 
 } // namespace subquake::plugin
-

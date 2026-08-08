@@ -12,6 +12,12 @@ Subquake is a YUP-based audio plugin and standalone synth that renders MIDI-trig
 - macOS formats: Standalone, VST3, AUv2
 - Windows formats: Standalone, VST3
 
+## Standalone Controls
+
+The built-in editor includes a momentary `Trigger` control for the Standalone app. Press and hold the button, press and hold Space while the editor has keyboard focus, or hold both; the editor publishes the combined gate state to the processor. External MIDI input is still accepted and uses the same monophonic engine path.
+
+The editor also shows a lightweight output activity meter. Trigger edges and meter values move through processor-owned atomics, so realtime rendering stays lock-free and allocation-free.
+
 ## Build
 
 ```sh
@@ -47,5 +53,5 @@ On macOS, the local bundle paths are:
 
 - `include/subquake/` contains the realtime-safe DSP engine API and local DSP primitives.
 - `source/` contains the engine implementation and YUP plugin/editor/state wrapper.
-- `tests/` contains deterministic engine regression tests.
+- `tests/` contains deterministic engine regression tests and a plugin-wrapper bridge test for the built-in synthetic trigger.
 - `cmake/` contains the project-local macOS icon conversion workaround used by the standalone target.

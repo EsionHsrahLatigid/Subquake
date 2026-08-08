@@ -44,7 +44,8 @@
       "configurePreset": "plugin-release",
       "targets": [
         "subquake_release_bundles",
-        "subquake_engine_tests"
+        "subquake_engine_tests",
+        "subquake_plugin_bridge_tests"
       ]
     }
   ],

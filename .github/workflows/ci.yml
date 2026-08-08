@@ -36,6 +36,7 @@ jobs:
         run: >
           cmake --build build/plugin-release --config Release --parallel
           --target subquake_engine_tests
+          subquake_plugin_bridge_tests
           subquake_standalone_plugin
           subquake_vst3_plugin
           subquake_au_plugin
@@ -105,6 +106,7 @@ jobs:
         run: >
           cmake --build build/windows-release --config Release --parallel
           --target subquake_engine_tests
+          subquake_plugin_bridge_tests
           subquake_standalone_plugin
           subquake_vst3_plugin
 
