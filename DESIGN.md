@@ -26,3 +26,11 @@ The current editor is a YUP parameter grid with direct host-bound controls plus 
 - External MIDI remains supported and is not converted through the UI trigger path.
 - The output activity meter is display-only. The audio thread stores a per-block peak as a scaled atomic integer, and the UI timer polls/decays it for drawing.
 - The editor still intentionally avoids product graphics until a dedicated Subquake visual language is implemented.
+
+## CI and Release Contract
+
+- `CI Summary` is the stable required check. A Linux classifier always runs; it skips macOS and Windows only for the documented docs-only allowlist and otherwise chooses the conservative heavy path.
+- macOS and Windows each build, test, package, and upload one `latest` ZIP plus a strict single-line `SHA256SUMS.txt`. Actions artifacts expire after 14 days.
+- Tag pushes never compile. The Release workflow resolves the tag to its commit, requires the tag and CMake project versions to match, locates the unique successful canonical `CI` push run on `main` with the same `head_sha`, requires exactly the two named platform artifacts, verifies SHA-256 and ZIP integrity, sanitizes the draft asset list, and only then publishes exactly the two versioned release assets.
+- Release provenance failures are terminal. Missing, expired, duplicate, or mismatched artifacts must not trigger an automatic rebuild or partial release.
+- GitHub actions are pinned to immutable commit SHAs. The release runner requires GitHub CLI 2.x or newer and the minimal `actions: read` / `contents: write` permissions.
