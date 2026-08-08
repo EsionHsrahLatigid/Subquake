@@ -52,7 +52,8 @@ jobs:
             if [[ "$FORCE_HEAVY" == true ]]; then
               reason=manual-force
             else
-              reason=manual-conservative
+              run_heavy=false
+              reason=manual-skip
             fi
           else
             base_sha=
@@ -164,7 +165,7 @@ jobs:
     name: Windows x64
     needs: classify
     if: needs.classify.outputs.run_heavy == 'true'
-    runs-on: windows-2025
+    runs-on: windows-2025-vs2026
     steps:
       - name: Checkout
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
@@ -211,10 +212,16 @@ jobs:
           $ErrorActionPreference = "Stop"
           Remove-Item -Recurse -Force dist -ErrorAction SilentlyContinue
           New-Item -ItemType Directory -Force -Path dist/Subquake-windows-x64 | Out-Null
-          $standalone = Get-ChildItem build/windows-release -Recurse -File -Filter subquake_standalone_plugin.exe | Select-Object -First 1
-          $vst3 = Get-ChildItem build/windows-release -Recurse -Directory -Filter subquake_vst3_plugin.vst3 | Select-Object -First 1
-          if (-not $standalone) { throw "Missing Subquake standalone executable" }
-          if (-not $vst3) { throw "Missing Subquake VST3 bundle" }
+          $standaloneCandidates = @(Get-ChildItem build/windows-release -Recurse -File -Filter subquake_standalone_plugin.exe)
+          $vst3Candidates = @(Get-ChildItem build/windows-release -Recurse -Directory -Filter subquake_vst3_plugin.vst3)
+          if ($standaloneCandidates.Count -ne 1) {
+            throw "Expected exactly one Subquake standalone executable, found $($standaloneCandidates.Count): $($standaloneCandidates.FullName -join ', ')"
+          }
+          if ($vst3Candidates.Count -ne 1) {
+            throw "Expected exactly one Subquake VST3 bundle, found $($vst3Candidates.Count): $($vst3Candidates.FullName -join ', ')"
+          }
+          $standalone = $standaloneCandidates[0]
+          $vst3 = $vst3Candidates[0]
           Copy-Item $standalone.FullName dist/Subquake-windows-x64/
           Copy-Item $vst3.FullName dist/Subquake-windows-x64/ -Recurse
           Compress-Archive -Path dist/Subquake-windows-x64 -DestinationPath dist/Subquake-latest-windows-x64.zip -Force

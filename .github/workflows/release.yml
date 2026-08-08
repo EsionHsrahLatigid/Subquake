@@ -55,7 +55,15 @@ jobs:
           [[ "$target_type" == commit ]]
 
           cmake_source="$(gh api "repos/$GH_REPO/contents/CMakeLists.txt?ref=$target_sha" --jq '.content' | base64 --decode)"
-          grep -Fq "project(Subquake VERSION $version " <<< "$cmake_source"
+          mapfile -t cmake_versions < <(
+            sed -nE \
+              '/^[[:space:]]*#/d; s/^[[:space:]]*project[[:space:]]*\([[:space:]]*Subquake[[:space:]]+VERSION[[:space:]]+([0-9]+\.[0-9]+\.[0-9]+)[[:space:])]+.*$/\1/p' \
+              <<< "$cmake_source"
+          )
+          [[ "${#cmake_versions[@]}" -gt 0 ]]
+          for cmake_version in "${cmake_versions[@]}"; do
+            [[ "$cmake_version" == "$version" ]]
+          done
 
           runs="$(gh api --paginate \
             "repos/$GH_REPO/actions/workflows/ci.yml/runs?branch=main&status=success&event=push&head_sha=$target_sha&per_page=100" \
