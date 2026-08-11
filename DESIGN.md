@@ -6,7 +6,7 @@ Subquake is a focused low-frequency pressure-noise instrument. MIDI notes retrig
 
 - Plugin formats: Standalone and VST3 on macOS and Windows; AUv2 additionally on macOS.
 - Synth behavior: accepts MIDI, produces stereo audio, one active voice.
-- Stable identity: `audio.2bit.subquake`, `audio.2bit.Subquake`, AU subtype `SbQk`.
+- Stable identity: `jp.ehl.subquake`, `jp.ehl.subquake`, AU subtype `SbQk`.
 - State format: parameter ID/value pairs with a `SQK1` magic header and version `1`.
 
 ## DSP Contract

@@ -4,8 +4,8 @@ Subquake is a YUP-based audio plugin and standalone synth that renders MIDI-trig
 
 ## Identity
 
-- App ID: `audio.2bit.subquake`
-- Plugin ID: `audio.2bit.Subquake`
+- App ID: `jp.ehl.subquake`
+- Plugin ID: `jp.ehl.subquake`
 - AU subtype: `SbQk`
 - Vendor: `2bit`
 - Type: stereo-output synth accepting MIDI input
