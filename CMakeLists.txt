@@ -142,6 +142,15 @@ if(SUBQUAKE_BUILD_PLUGIN)
     add_custom_target(subquake_release_bundles
         DEPENDS ${subquake_release_bundle_targets})
 
+    include(cmake/EhlYupArtifactLayout.cmake)
+    ehl_yup_add_artifact_target(
+        TARGET ehl_stage_products
+        PRODUCT Subquake
+        SLUG subquake
+        STANDALONE_TARGET subquake_standalone_plugin
+        VST3_TARGET subquake_vst3_plugin
+        AU_TARGET subquake_au_plugin)
+
     if(APPLE)
         set_target_properties(subquake_standalone_plugin PROPERTIES
             MACOSX_BUNDLE_GUI_IDENTIFIER "jp.ehl.subquake"

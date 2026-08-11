@@ -32,7 +32,7 @@ cmake --build --preset plugin-release
 ctest --preset plugin-release
 ```
 
-Release bundles are generated under `build/plugin-release` by YUP's plugin targets:
+Release bundles are staged under the stable `artifacts/plugin-release/<platform-arch>/` tree. `build/` is CMake's internal workspace:
 
 - `subquake_release_bundles`
 - `subquake_standalone_plugin`
@@ -41,9 +41,11 @@ Release bundles are generated under `build/plugin-release` by YUP's plugin targe
 
 On macOS, the local bundle paths are:
 
-- `build/plugin-release/subquake_standalone_plugin.app`
-- `build/plugin-release/VST3/Release/subquake_vst3_plugin.vst3`
-- `build/plugin-release/subquake_au_plugin.component`
+- `artifacts/plugin-release/macos-arm64/standalone/subquake_standalone_plugin.app`
+- `artifacts/plugin-release/macos-arm64/vst3/subquake_vst3_plugin.vst3`
+- `artifacts/plugin-release/macos-arm64/au/subquake_au_plugin.component`
+
+Windows uses `artifacts/plugin-release/windows-x64/` with `standalone/` and `vst3/` directories.
 
 ## CI
 

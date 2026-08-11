@@ -43,7 +43,7 @@
       "name": "plugin-release",
       "configurePreset": "plugin-release",
       "targets": [
-        "subquake_release_bundles",
+        "ehl_stage_products",
         "subquake_engine_tests",
         "subquake_plugin_bridge_tests"
       ]
