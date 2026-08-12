@@ -290,7 +290,7 @@ yup::AudioProcessorEditor* SubquakePlugin::createEditor()
     return new ParameterGridEditor (*this,
                                     "Subquake",
                                     "Hold Trigger or Space to play. External MIDI remains active.",
-                                    0xfff05a28u);
+                                    0xfff2f2f0u);
 #endif
 }
 

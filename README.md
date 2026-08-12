@@ -7,7 +7,8 @@ Subquake is a YUP-based audio plugin and standalone synth that renders MIDI-trig
 - App ID: `jp.ehl.subquake`
 - Plugin ID: `jp.ehl.subquake`
 - AU subtype: `SbQk`
-- Vendor: `2bit`
+- Plugin vendor: `ehl_`
+- AU manufacturer: `EHL1`
 - Type: stereo-output synth accepting MIDI input
 - macOS formats: Standalone, VST3, AUv2
 - Windows formats: Standalone, VST3
@@ -19,6 +20,12 @@ The built-in editor includes a momentary `Trigger` control for the Standalone ap
 The editor also shows a lightweight output activity meter. Trigger edges and meter values move through processor-owned atomics, so realtime rendering stays lock-free and allocation-free.
 
 ## Build
+
+Clone with `--recurse-submodules`, or initialize the shared [yup-ehl-design-module](https://github.com/EsionHsrahLatigid/yup-ehl-design-module) before configuring:
+
+```sh
+git submodule update --init
+```
 
 ```sh
 cmake --preset engine-debug
