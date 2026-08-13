@@ -39,7 +39,7 @@ cmake --build --preset plugin-release
 ctest --preset plugin-release
 ```
 
-Release bundles are staged under the stable `artifacts/plugin-release/<platform-arch>/` tree. `build/` is CMake's internal workspace:
+Release bundles are staged under the stable `artifacts/plugin-release/<platform-arch>/` tree. For local macOS non-CI `plugin-release` builds, the staged VST3 and AU bundles are also physically copied into `~/Library/Audio/Plug-Ins/VST3` and `~/Library/Audio/Plug-Ins/Components`; the Standalone app stays under `artifacts/`. Configure with `-DEHL_COPY_PLUGIN_AFTER_BUILD=OFF` to disable the local plugin copy. `build/` is CMake's internal workspace:
 
 - `subquake_release_bundles`
 - `subquake_standalone_plugin`
