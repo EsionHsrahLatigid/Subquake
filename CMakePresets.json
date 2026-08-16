@@ -29,6 +29,14 @@
         "SUBQUAKE_BUILD_PLUGIN": "ON",
         "SUBQUAKE_BUILD_TESTS": "ON"
       }
+    },
+    {
+      "name": "plugin-install",
+      "displayName": "Local plugin install (Release)",
+      "inherits": "plugin-release",
+      "cacheVariables": {
+        "EHL_COPY_PLUGIN_AFTER_BUILD": "ON"
+      }
     }
   ],
   "buildPresets": [
@@ -47,6 +55,11 @@
         "subquake_engine_tests",
         "subquake_plugin_bridge_tests"
       ]
+    },
+    {
+      "name": "plugin-install",
+      "configurePreset": "plugin-install",
+      "inherits": "plugin-release"
     }
   ],
   "testPresets": [
@@ -63,6 +76,11 @@
       "output": {
         "outputOnFailure": true
       }
+    },
+    {
+      "name": "plugin-install",
+      "configurePreset": "plugin-install",
+      "inherits": "plugin-release"
     }
   ]
 }
